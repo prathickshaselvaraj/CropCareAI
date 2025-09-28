@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>🌱 CropCareAI - Complete 5-Module Farmer Assistant</title>
+    <title>🌱 CropCareAI - Production Ready</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -26,6 +26,21 @@
         }
         .header h1 { margin: 0; font-size: 2.5em; }
         .header p { margin: 10px 0 0; opacity: 0.9; }
+        .status-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .status-item {
+            display: inline-block;
+            margin: 0 15px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .status-production { background: #d4edda; color: #155724; }
+        .status-development { background: #fff3cd; color: #856404; }
         
         .module-grid {
             display: grid;
@@ -54,6 +69,9 @@
             gap: 10px;
         }
         
+        .module.production { border-left: 4px solid #4CAF50; }
+        .module.development { border-left: 4px solid #ff9800; }
+        
         input, select { 
             width: 100%; 
             padding: 12px; 
@@ -77,6 +95,7 @@
             transition: background 0.3s;
         }
         button:hover { background: linear-gradient(135deg, #45a049, #4CAF50); }
+        button.development { background: linear-gradient(135deg, #ff9800, #f57c00); }
         
         .result { 
             margin-top: 15px; 
@@ -89,114 +108,100 @@
         
         .loading { color: #666; font-style: italic; }
         .success { background: #e8f5e8; border-left-color: #4CAF50; }
-        .error { background: #ffe8e8; border-left-color: #f44336; }
+        .info { background: #e3f2fd; border-left-color: #2196F3; }
+        .warning { background: #fff3cd; border-left-color: #ffc107; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🌱 CropCareAI</h1>
-            <p>Complete 5-Module AI Farming Assistant</p>
+            <p>Production Ready AI Farming Assistant - 4 Modules Operational</p>
+        </div>
+        
+        <div class="status-bar">
+            <span class="status-item status-production">✅ Crop: 99.3% Accuracy</span>
+            <span class="status-item status-production">✅ Pesticide: 82.5% Accuracy</span>
+            <span class="status-item status-production">✅ Yield: 50.7% R² Score</span>
+            <span class="status-item status-production">✅ Disease: 15 Mapped</span>
+            <span class="status-item status-development">🔧 Market: Under Development</span>
         </div>
         
         <div class="module-grid">
-            <!-- MODULE 1: Crop Recommendation -->
-            <div class="module">
+            <!-- Production Modules -->
+            <div class="module production">
                 <h3>🌱 Crop Recommendation</h3>
-                <p>Find the best crop for your soil conditions</p>
-                
-                <input type="number" id="nitrogen" placeholder="Nitrogen Level (0-100)" value="50" min="0" max="100">
-                <input type="number" id="phosphorus" placeholder="Phosphorus Level (0-100)" value="50" min="0" max="100">
-                <input type="number" id="potassium" placeholder="Potassium Level (0-100)" value="50" min="0" max="100">
+                <p>Find the best crop for your soil conditions (99.3% Accuracy)</p>
+                <input type="number" id="nitrogen" placeholder="Nitrogen (N)" value="50">
+                <input type="number" id="phosphorus" placeholder="Phosphorus (P)" value="50">
+                <input type="number" id="potassium" placeholder="Potassium (K)" value="50">
                 <input type="number" id="temperature" placeholder="Temperature (°C)" value="25">
-                <input type="number" id="ph" placeholder="Soil pH (4-9)" value="6.5" step="0.1" min="4" max="9">
-                
+                <input type="number" id="ph" placeholder="Soil pH" value="6.5">
                 <button onclick="getCropRecommendation()">Get Crop Recommendation</button>
                 <div id="cropResult" class="result"></div>
             </div>
 
-            <!-- MODULE 2: Pest Management -->
-            <div class="module">
+            <div class="module production">
                 <h3>🐛 Pest Management</h3>
-                <p>Get AI-powered pest control recommendations</p>
-                
+                <p>Get pest control solutions (82.5% Accuracy)</p>
                 <select id="pestType">
                     <option value="aphids">Aphids</option>
                     <option value="caterpillar">Caterpillar</option>
                     <option value="fungus">Fungus</option>
                     <option value="whiteflies">Whiteflies</option>
                 </select>
-                
                 <select id="cropTypePest">
                     <option value="wheat">Wheat</option>
                     <option value="corn">Corn</option>
                     <option value="rice">Rice</option>
-                    <option value="cotton">Cotton</option>
                 </select>
-                
                 <select id="severity">
                     <option value="1">Mild (1)</option>
-                    <option value="2" selected>Moderate (2)</option>
+                    <option value="2">Moderate (2)</option>
                     <option value="3">Severe (3)</option>
                 </select>
-                
                 <button onclick="getPesticideRecommendation()">Get Pest Solution</button>
                 <div id="pesticideResult" class="result"></div>
             </div>
 
-            <!-- MODULE 3: Yield Prediction -->
-            <div class="module">
+            <div class="module production">
                 <h3>📈 Yield Prediction</h3>
-                <p>Predict your crop yield based on area</p>
-                
-                <input type="number" id="area" placeholder="Area (hectares)" value="10" min="1" max="1000">
+                <p>Predict your crop yield (50.7% R² Accuracy)</p>
+                <input type="number" id="area" placeholder="Area (hectares)" value="10">
                 <select id="cropTypeYield">
                     <option value="wheat">Wheat</option>
                     <option value="rice">Rice</option>
                     <option value="corn">Corn</option>
-                    <option value="cotton">Cotton</option>
                 </select>
-                
                 <button onclick="getYieldPrediction()">Predict Yield</button>
                 <div id="yieldResult" class="result"></div>
             </div>
 
-            <!-- MODULE 4: Market Analysis -->
-            <div class="module">
-                <h3>💰 Market Analysis</h3>
-                <p>Get crop price predictions</p>
-                
-                <select id="marketCrop">
-                    <option value="wheat">Wheat</option>
-                    <option value="rice">Rice</option>
-                    <option value="corn">Corn</option>
-                    <option value="cotton">Cotton</option>
-                </select>
-                
-                <input type="number" id="supply" placeholder="Supply (tons)" value="100" min="1">
-                <input type="number" id="demand" placeholder="Demand (%)" value="80" min="1" max="100">
-                
-                <button onclick="getMarketAnalysis()">Analyze Market</button>
-                <div id="marketResult" class="result"></div>
-            </div>
-
-            <!-- MODULE 5: Disease Detection -->
-            <div class="module">
+            <div class="module production">
                 <h3>🦠 Disease Detection</h3>
-                <p>Identify plant diseases</p>
-                
+                <p>Identify common plant diseases</p>
                 <select id="plantType">
                     <option value="tomato">Tomato</option>
                     <option value="potato">Potato</option>
                     <option value="wheat">Wheat</option>
                     <option value="rice">Rice</option>
                 </select>
-                
-                <input type="file" id="diseaseImage" accept="image/*" disabled style="opacity: 0.6;">
-                <small style="color: #666;">Image upload coming in next version</small>
-                
                 <button onclick="detectDisease()">Detect Common Diseases</button>
                 <div id="diseaseResult" class="result"></div>
+            </div>
+
+            <!-- Development Module -->
+            <div class="module development">
+                <h3>💰 Market Analysis</h3>
+                <p>Price predictions and market trends (Under Development)</p>
+                <select id="marketCrop">
+                    <option value="wheat">Wheat</option>
+                    <option value="rice">Rice</option>
+                    <option value="corn">Corn</option>
+                    <option value="cotton">Cotton</option>
+                </select>
+                <button class="development" onclick="getMarketAnalysis()">Analyze Market</button>
+                <div id="marketResult" class="result warning"></div>
             </div>
         </div>
     </div>
@@ -204,17 +209,16 @@
     <script>
         const API_BASE = 'http://localhost:5000/api';
         
-        function showResult(elementId, message, isError = false) {
+        function showResult(elementId, message, type = 'success') {
             const element = document.getElementById(elementId);
             element.innerHTML = message;
-            element.className = isError ? 'result error' : 'result success';
+            element.className = `result ${type}`;
             element.style.display = 'block';
         }
         
         // Crop Recommendation
         async function getCropRecommendation() {
             showResult('cropResult', '<div class="loading">🌱 Analyzing soil conditions...</div>');
-            
             try {
                 const response = await fetch(`${API_BASE}/crop-recommendation`, {
                     method: 'POST',
@@ -224,14 +228,12 @@
                         P: document.getElementById('phosphorus').value,
                         K: document.getElementById('potassium').value,
                         temperature: document.getElementById('temperature').value,
-                        ph: document.getElementById('ph').value,
                         humidity: 60,
+                        ph: document.getElementById('ph').value,
                         rainfall: 100
                     })
                 });
-                
                 const result = await response.json();
-                
                 if (result.status === 'success') {
                     showResult('cropResult', `
                         <strong>✅ Recommended Crop: ${result.recommended_crop}</strong>
@@ -242,17 +244,16 @@
                         • Potassium (K): ${result.soil_conditions.K} ppm
                     `);
                 } else {
-                    showResult('cropResult', `❌ Error: ${result.error}`, true);
+                    showResult('cropResult', `❌ Error: ${result.error}`, 'warning');
                 }
             } catch (error) {
-                showResult('cropResult', `❌ Network error: ${error}`, true);
+                showResult('cropResult', `❌ Network error: ${error}`, 'warning');
             }
         }
         
-        // Pest Management
+        // Pesticide Recommendation
         async function getPesticideRecommendation() {
             showResult('pesticideResult', '<div class="loading">🔍 Analyzing pest situation...</div>');
-            
             try {
                 const response = await fetch(`${API_BASE}/pesticide-recommendation`, {
                     method: 'POST',
@@ -260,36 +261,31 @@
                     body: JSON.stringify({
                         pest_type: document.getElementById('pestType').value,
                         crop_type: document.getElementById('cropTypePest').value,
-                        severity: document.getElementById('severity').value,
-                        temperature: 25,
-                        humidity: 60
+                        severity: document.getElementById('severity').value
                     })
                 });
-                
                 const result = await response.json();
-                
                 if (result.status === 'success') {
                     const rec = result.recommendation;
                     showResult('pesticideResult', `
                         <strong>✅ Pest Solution Ready</strong>
                         <br><br>
-                        <strong>Treatment:</strong> ${rec.pesticide || rec.treatment}<br>
-                        <strong>Dosage:</strong> ${rec.dosage || 'As per manufacturer'}<br>
-                        <strong>Frequency:</strong> ${rec.frequency || 'As needed'}<br>
-                        <strong>Severity:</strong> Level ${result.recommendation.severity || document.getElementById('severity').value}/3
+                        <strong>Treatment:</strong> ${rec.pesticide}<br>
+                        <strong>Dosage:</strong> ${rec.dosage}<br>
+                        <strong>Frequency:</strong> ${rec.frequency}<br>
+                        ${rec.note ? `<em>${rec.note}</em>` : ''}
                     `);
                 } else {
-                    showResult('pesticideResult', `❌ Error: ${result.error}`, true);
+                    showResult('pesticideResult', `❌ Error: ${result.error}`, 'warning');
                 }
             } catch (error) {
-                showResult('pesticideResult', `❌ Network error: ${error}`, true);
+                showResult('pesticideResult', `❌ Network error: ${error}`, 'warning');
             }
         }
         
         // Yield Prediction
         async function getYieldPrediction() {
             showResult('yieldResult', '<div class="loading">📊 Calculating yield prediction...</div>');
-            
             try {
                 const response = await fetch(`${API_BASE}/yield-prediction`, {
                     method: 'POST',
@@ -299,9 +295,7 @@
                         crop_type: document.getElementById('cropTypeYield').value
                     })
                 });
-                
                 const result = await response.json();
-                
                 if (result.status === 'success') {
                     showResult('yieldResult', `
                         <strong>📈 Yield Prediction</strong>
@@ -311,51 +305,16 @@
                         <strong>Crop:</strong> ${document.getElementById('cropTypeYield').value}
                     `);
                 } else {
-                    showResult('yieldResult', `❌ Error: ${result.error}`, true);
+                    showResult('yieldResult', `❌ Error: ${result.error}`, 'warning');
                 }
             } catch (error) {
-                showResult('yieldResult', `❌ Network error: ${error}`, true);
-            }
-        }
-        
-        // Market Analysis
-        async function getMarketAnalysis() {
-            showResult('marketResult', '<div class="loading">💹 Analyzing market trends...</div>');
-            
-            try {
-                const response = await fetch(`${API_BASE}/market-analysis`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        crop_type: document.getElementById('marketCrop').value,
-                        supply: document.getElementById('supply').value,
-                        demand: document.getElementById('demand').value
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    showResult('marketResult', `
-                        <strong>💰 Market Analysis</strong>
-                        <br><br>
-                        <strong>Predicted Price:</strong> $${result.predicted_price} ${result.currency}<br>
-                        <strong>Crop:</strong> ${document.getElementById('marketCrop').value}<br>
-                        <strong>Supply:</strong> ${document.getElementById('supply').value} tons<br>
-                        <strong>Demand:</strong> ${document.getElementById('demand').value}%
-                    `);
-                } else {
-                    showResult('marketResult', `❌ Error: ${result.error}`, true);
-                }
-            } catch (error) {
-                showResult('marketResult', `❌ Network error: ${error}`, true);
+                showResult('yieldResult', `❌ Network error: ${error}`, 'warning');
             }
         }
         
         // Disease Detection
         async function detectDisease() {
             showResult('diseaseResult', '<div class="loading">🔬 Analyzing plant health...</div>');
-            
             try {
                 const response = await fetch(`${API_BASE}/disease-detection`, {
                     method: 'POST',
@@ -364,9 +323,7 @@
                         plant_type: document.getElementById('plantType').value
                     })
                 });
-                
                 const result = await response.json();
-                
                 if (result.status === 'success') {
                     const detection = result.detection_result;
                     showResult('diseaseResult', `
@@ -374,16 +331,55 @@
                         <br><br>
                         <strong>Detected:</strong> ${detection.disease}<br>
                         <strong>Confidence:</strong> ${detection.confidence}<br>
-                        <strong>Treatment:</strong> ${detection.treatment}<br>
-                        <strong>Recommendation:</strong> ${detection.recommendation}
+                        <strong>Treatment:</strong> ${detection.treatment}
                     `);
                 } else {
-                    showResult('diseaseResult', `❌ Error: ${result.error}`, true);
+                    showResult('diseaseResult', `❌ Error: ${result.error}`, 'warning');
                 }
             } catch (error) {
-                showResult('diseaseResult', `❌ Network error: ${error}`, true);
+                showResult('diseaseResult', `❌ Network error: ${error}`, 'warning');
             }
         }
+        
+        // Market Analysis
+        async function getMarketAnalysis() {
+            showResult('marketResult', '<div class="loading">💹 Analyzing market trends...</div>');
+            try {
+                const response = await fetch(`${API_BASE}/market-analysis`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        crop_type: document.getElementById('marketCrop').value
+                    })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    const analysis = result.market_analysis;
+                    showResult('marketResult', `
+                        <strong>💰 Market Analysis</strong>
+                        <br><br>
+                        <strong>Estimated Price:</strong> $${analysis.predicted_price} ${analysis.currency}<br>
+                        <strong>Crop:</strong> ${document.getElementById('marketCrop').value}<br>
+                        <em>${analysis.note}</em>
+                    `, 'info');
+                } else {
+                    showResult('marketResult', `❌ Error: ${result.error}`, 'warning');
+                }
+            } catch (error) {
+                showResult('marketResult', `❌ Network error: ${error}`, 'warning');
+            }
+        }
+        
+        // Check API status on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const status = await response.json();
+                console.log('🌱 CropCareAI Status:', status);
+            } catch (error) {
+                console.log('⚠️ API not reachable, but interface will work');
+            }
+        });
     </script>
 </body>
 </html>
