@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🌱 Crop Recommendation - CropCareAI</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div id="header-container"></div>
+    
+    <div class="container">
+        <div class="module-container">
+            <h2>🌱 Crop Recommendation</h2>
+            <p>Find the best crop for your soil conditions (99.3% Accuracy)</p>
+            
+            <div class="field-group">
+                <h4>🌿 Soil Nutrients (ppm)</h4>
+                <div class="input-group">
+                    <label for="nitrogen">Nitrogen (N):</label>
+                    <input type="number" id="nitrogen" value="50" min="0" max="140">
+                    <div class="help-text">Essential for leaf growth (0-140 ppm)</div>
+                </div>
+                <div class="input-group">
+                    <label for="phosphorus">Phosphorus (P):</label>
+                    <input type="number" id="phosphorus" value="50" min="0" max="145">
+                    <div class="help-text">Important for root development (0-145 ppm)</div>
+                </div>
+                <div class="input-group">
+                    <label for="potassium">Potassium (K):</label>
+                    <input type="number" id="potassium" value="50" min="0" max="205">
+                    <div class="help-text">Vital for overall plant health (0-205 ppm)</div>
+                </div>
+            </div>
+            
+            <div class="field-group">
+                <h4>🌤️ Environmental Conditions</h4>
+                <div class="input-group">
+                    <label for="temperature">Temperature (°C):</label>
+                    <input type="number" id="temperature" value="25" min="-10" max="50">
+                    <div class="help-text">Average temperature in Celsius</div>
+                </div>
+                <div class="input-group">
+                    <label for="ph">Soil pH Level:</label>
+                    <input type="number" id="ph" value="6.5" min="3" max="10" step="0.1">
+                    <div class="help-text">Acidity/Alkalinity (3.0 - 10.0)</div>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="getCropRecommendation()">🌱 Get Crop Recommendation</button>
+            <div id="cropResult" class="result"></div>
+        </div>
+    </div>
+    
+    <div id="footer-container"></div>
+
+    <script src="assets/js/common.js"></script>
+    <script>
+        async function getCropRecommendation() {
+            showResult('cropResult', '<div class="loading">🌱 Analyzing soil conditions and environment...</div>');
+            try {
+                const response = await fetch(`${API_BASE}/crop-recommendation`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        N: parseInt(document.getElementById('nitrogen').value),
+                        P: parseInt(document.getElementById('phosphorus').value),
+                        K: parseInt(document.getElementById('potassium').value),
+                        temperature: parseInt(document.getElementById('temperature').value),
+                        humidity: 60,
+                        ph: parseFloat(document.getElementById('ph').value),
+                        rainfall: 100
+                    })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showResult('cropResult', `
+                        <strong>✅ Recommended Crop: ${result.recommended_crop}</strong>
+                        <br><br>
+                        <strong>Soil Analysis Report:</strong><br>
+                        • 🌿 Nitrogen (N): ${result.soil_conditions.N} ppm<br>
+                        • 🌿 Phosphorus (P): ${result.soil_conditions.P} ppm<br>
+                        • 🌿 Potassium (K): ${result.soil_conditions.K} ppm<br>
+                        • 🌡️ Temperature: ${document.getElementById('temperature').value}°C<br>
+                        • 🧪 Soil pH: ${document.getElementById('ph').value}
+                    `);
+                } else {
+                    showResult('cropResult', `❌ Error: ${result.error}`, 'warning');
+                }
+            } catch (error) {
+                showResult('cropResult', `❌ Network error: ${error}`, 'warning');
+            }
+        }
+    </script>
+</body>
+</html>

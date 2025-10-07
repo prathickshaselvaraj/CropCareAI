@@ -188,6 +188,12 @@ class FixedModularModelDeveloper:
             print("⚠️  Not enough classes for classification, skipping pesticide module")
             return models
         
+        # Remove classes with only 1 sample
+        y_counts = y.value_counts()
+        y = y[y.isin(y_counts[y_counts > 1].index)]
+        X_encoded = X_encoded.loc[y.index]
+
+        
         X_encoded = self._encode_categorical_memory_safe(X)
         X_train, X_test, y_train, y_test = self._safe_train_test_split(X_encoded, y)
         
