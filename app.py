@@ -36,86 +36,133 @@ class CropCareAI:
         """Load ALL your actual trained ML models"""
         print("🧠 Loading ACTUAL ML Models...")
         
-        # 1. CROP RECOMMENDATION - YOUR RANDOM FOREST MODEL
+        # 1. CROP RECOMMENDATION - FINAL MODEL
         try:
-            self.models['crop'] = joblib.load('src/modules/crop_recommendation/models/crop_classifier_rf.pkl')
-            print("✅ Crop Recommendation RF Model Loaded")
+            self.models['crop'] = joblib.load('src/modules/crop_recommendation/models/final_crop_model.pkl')
+            print("✅ Crop Recommendation FINAL Model Loaded")
         except Exception as e:
             print(f"❌ Crop Model failed: {e}")
             self.models['crop'] = None
 
-        # 2. YIELD PREDICTION - YOUR ACTUAL YIELD MODEL
+        # 2. YIELD PREDICTION - FINAL MODEL
         try:
-            self.models['yield'] = joblib.load('src/modules/yield_analysis/models/yield_predictor.pkl')
-            print("✅ Yield Prediction Model Loaded")
+            self.models['yield'] = joblib.load('src/modules/yield_analysis/models/final_yield_model.pkl')
+            print("✅ Yield Prediction FINAL Model Loaded")
         except Exception as e:
             print(f"❌ Yield Model failed: {e}")
             self.models['yield'] = None
 
-        # 3. PESTICIDE DETECTION - YOUR ACTUAL PEST MODELS
+        # 3. PESTICIDE DETECTION - FINAL MODELS
         try:
-            self.models['pest_presence'] = joblib.load('src/modules/pesticide_recommendation/models/pest_presence_classifier.pkl')
-            self.models['pest_severity'] = joblib.load('src/modules/pesticide_recommendation/models/pest_severity_classifier.pkl')
-            self.models['treatment'] = joblib.load('src/modules/pesticide_recommendation/models/treatment_recommender.pkl')
-            print("✅ Pest Detection Models Loaded")
+            self.models['pest_classifier'] = joblib.load('src/modules/pesticide_recommendation/models/final_pest_classifier.pkl')
+            self.models['treatment'] = joblib.load('src/modules/pesticide_recommendation/models/treatment_rules.pkl')
+            print("✅ Pest Detection FINAL Models Loaded")
         except Exception as e:
             print(f"❌ Pest Models failed: {e}")
-            self.models['pest_presence'] = None
-            self.models['pest_severity'] = None
+            self.models['pest_classifier'] = None
             self.models['treatment'] = None
 
-        # 4. DISEASE DETECTION - YOUR ACTUAL MODELS
+        # 4. DISEASE DETECTION - FINAL MODEL
         try:
             self.models['disease_metadata'] = joblib.load('src/modules/disease_detection/models/disease_metadata.pkl')
-            self.models['image_preprocessor'] = joblib.load('src/modules/disease_detection/models/image_preprocessor.pkl')
-            print("✅ Disease Detection Models Loaded")
+            print("✅ Disease Detection FINAL Model Loaded")
         except Exception as e:
-            print(f"❌ Disease Models failed: {e}")
+            print(f"❌ Disease Model failed: {e}")
             self.models['disease_metadata'] = None
-            self.models['image_preprocessor'] = None
 
-        # 5. MARKET ANALYSIS - YOUR ACTUAL MODELS
-        try:
-            self.models['market_predictor'] = joblib.load('src/modules/market_analysis/models/market_predictor.pkl')
-            self.models['price_predictor'] = joblib.load('src/modules/market_analysis/models/price_predictor.pkl')
-            print("✅ Market Analysis Models Loaded")
-        except Exception as e:
-            print(f"❌ Market Models failed: {e}")
-            self.models['market_predictor'] = None
-            self.models['price_predictor'] = None
+        # 5. MARKET ANALYSIS - SKIP (we don't have market models)
+        self.models['market_predictor'] = None
+        self.models['price_predictor'] = None
+        print("⚠️  Market Analysis: No models available")
 
         print(f"🎯 ML Models Loaded: {len([m for m in self.models.values() if m is not None])}")
 
     def predict_crop(self, data):
-        """ACTUAL ML PREDICTION using your Random Forest model"""
+        """ACTUAL ML PREDICTION using your FINAL Random Forest model"""
         if self.models['crop'] is None:
             return self._fallback_crop()
-            
+        
         try:
-            # Prepare features for ACTUAL ML model
-            features = np.array([[
-                float(data.get('N', 50)),
-                float(data.get('P', 50)), 
-                float(data.get('K', 50)),
-                float(data.get('temperature', 25)),
-                float(data.get('humidity', 60)),
-                float(data.get('ph', 6.5)),
-                float(data.get('rainfall', 100))
-            ]])
+            # Extract main features from input
+            N = float(data.get('N', 50))
+            P = float(data.get('P', 50))
+            K = float(data.get('K', 50))
+            temperature = float(data.get('temperature', 25))
+            humidity = float(data.get('humidity', 60))
+            ph = float(data.get('ph', 6.5))
+            rainfall = float(data.get('rainfall', 100))
+            
+            # Prepare ALL 30 features exactly as the model expects
+            features = [
+                # --- 15 known/base features ---
+                2,                          # Soilcolor (default: 2)
+                ph,                         # Ph
+                K,                          # K 
+                P,                          # P
+                N,                          # N
+                50.0,                       # Zn (default)
+                50.0,                       # S (default)
+                temperature,                 # QV2M-Sp (using temperature)
+                temperature + 2,             # QV2M-Su (slightly higher)
+                temperature - 2,             # QV2M-Au (slightly lower)
+                temperature - 5,             # T2M_MIN-W (winter min)
+                temperature,                 # T2M_MIN-Su (summer min)
+                temperature - 3,             # T2M_MIN-Au (autumn min)
+                (N + P + K) / 3,             # soil_health_score
+                100 - (abs(N - P) + abs(P - K) + abs(K - N)) / 3,  # nutrient_balance_score
+                
+                # --- 15 engineered features ---
+                (N + P + K) / 3,             # soil_fertility_index
+                abs(N - P) + abs(P - K) + abs(K - N),  # NPK_balance
+                N / max(P, 0.1),             # NP_ratio
+                N / max(K, 0.1),             # NK_ratio
+                (temperature * humidity * rainfall) / max(abs(ph - 6.5), 0.1),  # climate_suitability
+                temperature * rainfall,       # temp_rain_interaction
+                humidity * ph,                # humidity_ph_interaction
+                max(temperature - 10, 0),     # growing_degree_days
+                1 if 15 <= temperature <= 30 else 0,  # is_optimal_temp
+                abs(temperature - 25),        # temp_deviation
+                abs(humidity - 60),           # humidity_deviation
+                rainfall / 100,               # rainfall_normalized
+                P / max(K, 0.1),              # PK_ratio
+                N * P * K / 1000,             # nutrient_interaction
+                (temperature + humidity) / 2  # temp_humidity_avg
+            ]
+            
+            features_array = np.array([features])
             
             # ACTUAL ML PREDICTION
-            prediction = self.models['crop'].predict(features)[0]
-            probabilities = self.models['crop'].predict_proba(features)[0]
+            prediction = self.models['crop'].predict(features_array)[0]
+            probabilities = self.models['crop'].predict_proba(features_array)[0]
             confidence = np.max(probabilities)
             
-            return prediction, float(confidence)
+            print(f"🎯 Prediction: {prediction}")
+            print(f"📊 Confidence: {confidence:.4f}")
             
+            # Show top 3 predictions
+            top_3 = sorted(
+                zip(self.models['crop'].classes_, probabilities),
+                key=lambda x: x[1],
+                reverse=True
+            )[:3]
+            
+            print("🔝 Top 3 crops:")
+            for crop, prob in top_3:
+                print(f"   {crop}: {prob:.4f}")
+            
+            return prediction, float(confidence)
+        
         except Exception as e:
             logger.error(f"ML Crop prediction failed: {e}")
+            print(f"❌ Detailed error: {e}")
+            import traceback
+            traceback.print_exc()
             return self._fallback_crop()
 
+
+
     def predict_yield(self, data):
-        """ACTUAL ML PREDICTION using your Yield model"""
+        """ACTUAL ML PREDICTION using your FINAL Yield model"""
         if self.models['yield'] is None:
             return self._fallback_yield(data)
             
@@ -140,34 +187,30 @@ class CropCareAI:
             return self._fallback_yield(data)
 
     def predict_pesticide(self, data):
-        """ACTUAL ML PREDICTION using your Pest models"""
-        if self.models['pest_presence'] is None:
+        """ACTUAL ML PREDICTION using your FINAL Pest model"""
+        if self.models['pest_classifier'] is None:
             return self._fallback_pesticide(data)
             
         try:
-            pest_type = data.get('pest_type', '').lower()
-            crop_type = data.get('crop_type', 'wheat')
-            severity = int(data.get('severity', 2))
+            # Prepare features for FINAL pest classifier
+            features = self._prepare_pest_features(data)
             
-            # ACTUAL ML PREDICTION for pest presence and severity
-            # You would use your pest_presence_classifier and pest_severity_classifier here
-            features = np.array([[severity]])  # Adjust based on your model's expected features
+            # ACTUAL ML PREDICTION for pest type
+            pest_prediction = self.models['pest_classifier'].predict(features)[0]
+            pest_probabilities = self.models['pest_classifier'].predict_proba(features)[0]
+            confidence = np.max(pest_probabilities)
             
-            # For now, using treatment_recommender
-            if self.models['treatment'] is not None:
-                treatment_data = {
-                    'pest_type': pest_type,
-                    'crop_type': crop_type, 
-                    'severity': severity
-                }
-                # Convert to features your model expects
-                treatment_features = self._prepare_treatment_features(treatment_data)
-                recommendation = self.models['treatment'].predict([treatment_features])[0]
-                
+            # Get treatment recommendation from rules
+            severity = data.get('severity', 'Moderate')
+            treatment_info = self.models['treatment'].get(pest_prediction, {}).get(severity, {})
+            
+            if treatment_info:
                 return {
-                    'pesticide': recommendation,
-                    'dosage': '2ml/L',  # You can make this dynamic based on severity
-                    'frequency': 'Every 7 days',
+                    'pest_type': pest_prediction,
+                    'treatment': treatment_info.get('treatment', 'General treatment'),
+                    'dosage': treatment_info.get('dosage', 'As per label'),
+                    'frequency': treatment_info.get('frequency', 'As needed'),
+                    'confidence': float(confidence),
                     'method': 'ML Model'
                 }
             else:
@@ -178,7 +221,7 @@ class CropCareAI:
             return self._fallback_pesticide(data)
 
     def predict_disease(self, data):
-        """ACTUAL prediction using your disease models"""
+        """ACTUAL prediction using your FINAL disease models"""
         if self.models['disease_metadata'] is None:
             return self._fallback_disease(data)
             
@@ -201,34 +244,27 @@ class CropCareAI:
             return self._fallback_disease(data)
 
     def predict_market(self, data):
-        """ACTUAL ML PREDICTION using your Market models"""
-        if self.models['market_predictor'] is None:
-            return self._fallback_market(data)
-            
-        try:
-            crop_type = data.get('crop_type', 'wheat')
-            
-            # Prepare features for ACTUAL Market ML model
-            features = np.array([[
-                # Add your market prediction features here
-                # These should match what your model was trained on
-                1,  # Example feature - replace with actual features
-            ]])
-            
-            # ACTUAL ML PREDICTION
-            predicted_price = self.models['market_predictor'].predict(features)[0]
-            
-            return {
-                'predicted_price': float(predicted_price),
-                'currency': 'USD/ton',
-                'method': 'ML Model'
-            }
-            
-        except Exception as e:
-            logger.error(f"ML Market prediction failed: {e}")
-            return self._fallback_market(data)
+        """Market analysis - No models available"""
+        return self._fallback_market(data)
 
     # Helper methods for feature preparation
+    def _prepare_pest_features(self, data):
+        """Convert pest data to model features"""
+        # This should match how your final_pest_classifier was trained
+        features = []
+        
+        # Add plant health metrics
+        features.extend([
+            float(data.get('height_cm', 30)),
+            float(data.get('leaf_count', 15)),
+            float(data.get('health_score', 7)),
+            float(data.get('soil_moisture', 50)),
+            float(data.get('temperature', 25)),
+            float(data.get('humidity', 60))
+        ])
+        
+        return np.array([features])
+
     def _prepare_treatment_features(self, data):
         """Convert treatment data to model features"""
         # Map pest types to numerical values
@@ -337,13 +373,13 @@ def status():
         'ml_models_loaded': loaded_models,
         'total_ml_models': len(ai_system.models),
         'modules': {
-            'crop_recommendation': '✅ ML Model' if ai_system.models['crop'] else '❌ Failed',
-            'yield_prediction': '✅ ML Model' if ai_system.models['yield'] else '❌ Failed', 
-            'pesticide_recommendation': '✅ ML Model' if ai_system.models['pest_presence'] else '❌ Failed',
-            'disease_detection': '✅ ML Model' if ai_system.models['disease_metadata'] else '❌ Failed',
-            'market_analysis': '✅ ML Model' if ai_system.models['market_predictor'] else '❌ Failed'
+            'crop_recommendation': '✅ FINAL ML Model' if ai_system.models['crop'] else '❌ Failed',
+            'yield_prediction': '✅ FINAL ML Model' if ai_system.models['yield'] else '❌ Failed', 
+            'pesticide_recommendation': '✅ FINAL ML Model' if ai_system.models['pest_classifier'] else '❌ Failed',
+            'disease_detection': '✅ FINAL ML Model' if ai_system.models['disease_metadata'] else '❌ Failed',
+            'market_analysis': '⚠️ Not Available'
         },
-        'message': f'🧠 {loaded_models} ML models actively predicting'
+        'message': f'🧠 {loaded_models} FINAL ML models actively predicting'
     })
 
 # API Routes with ACTUAL ML predictions
@@ -426,7 +462,7 @@ def market_analysis():
 
 if __name__ == '__main__':
     print("🚀 CropCareAI ML Production Server Starting...")
-    print("🧠 Using ACTUAL trained ML models for predictions")
+    print("🧠 Using ACTUAL trained FINAL ML models for predictions")
     print("🌐 Frontend available at: http://localhost:5000")
     print("📊 API available at: http://localhost:5000/api/status")
     app.run(debug=True, host='0.0.0.0', port=5000)
